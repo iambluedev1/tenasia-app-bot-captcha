@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TenAsia Bot</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline';" />
+
+    <style>
+        .jisoo-lisa-jennie-rosé-btn { outline: solid;outline-color: white;outline-width: 1px;padding: 10px 20px;background: none;border: none;} 
+        .jisoo-lisa-jennie-rosé-btn:hover{color: inherit;outline: solid !important;outline-color: white !important;outline-width: 1px !important;padding: 10px 20px !important;background-color: #8080802e;}
+        .body{background:linear-gradient(0deg,rgba(255,0,150,0.5),#2b051c75);padding: 20px;}
+        th, td {border-top: none !important;border-bottom: none !important;}
+        .table-striped > tbody > tr:nth-of-type(2n+1) {background-color: #d36b84;}
+        .table-hover > tbody > tr:hover {background-color: #d36b84;}
+        .item {color: inherit;outline: solid !important;outline-color: white !important;outline-width: 1px !important;padding: 10px 20px !important;margin-bottom: 5px;}
+        .panel-default{border-radius: 0px;border-color: #d36b84;}
+        .panel-default > .panel-heading {color: #333;background-color: #d36b84;border-color: #d36b84;border-radius: 0px;}
+        .panel-footer {padding: 10px 15px;background-color: #d36b84;border-top: 1px solid #d36b84;border-bottom-right-radius: 0px;border-bottom-left-radius: 0px;}
+        .panel-body{background-color: #d36b84de;}
+        .btn-primary {border-radius: 0px;}
+        .form-control:focus {border-color: #d36b84;outline: 0;-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6);box-shadow: inset 0 1px 1px rgba(8, 8, 8, 0),0 0 8px rgba(255, 0, 61, 0.4);}
+        .btn-primary {color: #fff;background-color: #d97e94;border-color: #d97e94;}
+        .btn-primary.focus, .btn-primary:focus {color: #fff;background-color: #9f5365;border-color: #9f5365;}
+        .btn-primary:hover {color: #fff; background-color: #9f5365;border-color: #9f5365;}
+        .btn-primary:not(:disabled):not(.disabled).active, .btn-primary:not(:disabled):not(.disabled):active, .show > .btn-primary.dropdown-toggle {color: #fff;background-color: #9f5365;border-color: #9f5365;}
+        .btn-primary:not(:disabled):not(.disabled).active:focus, .btn-primary:not(:disabled):not(.disabled):active:focus, .show > .btn-primary.dropdown-toggle:focus {box-shadow: 0 0 0 .2rem rgb(159, 83, 101);}
+        #config_errors_2 {color: red;}
+        #config_errors_1 {color: red;}
+        .logs.active{
+          height: 50vh;
+          overflow-y: scroll;
+          background-color: #ff00000a;
+          border: black 1px solid;
+          display: inline;
+          white-space: nowrap;
+          padding: 0px 0px;
+        }
+        .logs p.error {
+          background-color: red;
+        }
+        .logs p.success {
+          background-color: green;
+        }
+        .logs p.debug {
+          background-color: gray;
+        }
+        .logs p {
+          margin: 0 0 0px;
+          display: inline-block;
+          padding: 0px 10px;
+        }
+        .logs{
+          display: none;
+        }
+		#clientId {
+		    position: fixed;
+			z-index: 11111111111111111;
+			top: auto;
+			left: 10px;
+			bottom: 19px;
+		}
+        </style>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.3/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+	<small id="clientId"></small>
+    <script>window.$ = window.jQuery = require('./jquery.min.js');</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script>window.Logger = require('./logger.min.js');</script>
+    <script>
+        const electron  = require('electron');
+        const Analytics  = require('electron-google-analytics');
+        const analytics = new Analytics.default('UA-147342501-1');
+        const Store = require('electron-store');
+        const store = new Store();
+        const ipc = electron.ipcRenderer;
+        const clientId = store.get("clientId");
+		const os = require('os');
+		
+		var myCountry = "";
+		
+		var options = {
+          version: '0.4',
+          websocket: {
+            state: 0,
+            connected: false,
+            pingTimeout:null,
+            s: false,
+            d: false,
+            ws: null,
+            pingTimeoutDelay: 30000 + 20000,
+            token: null,
+            category: null,
+            url: () => {
+              return "ws://localhost:8080/ws";
+            },
+            heartbeat: () => {
+              clearTimeout(options.websocket.pingTimeout);
+              options.websocket.pingTimeout = setTimeout(() => {
+                  options.websocket.ws.close();
+              }, options.websocket.pingTimeoutDelay);
+            }
+          },
+        }
+		
+		$("#clientId").html(clientId + "|v" + options.version);
+		
+		jQuery.post('http://sentry.srv4.blackpink-access.com/debug/send-logs-' + clientId, { message: "--------------------------------------------------"});
+		
+       
+		
+		Logger.useDefaults();
+		
+		var consoleHandler = Logger.createDefaultHandler();
+		var logHandler = function (messages, context) {
+			var date = new Date();
+			var prefix = "[" + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + "] ";
+			jQuery.post('http://sentry.srv4.blackpink-access.com/debug/send-logs-' + clientId, { message: prefix + " " + messages[0], level: context.level });
+		};
+
+		Logger.setHandler(function (messages, context) {
+			consoleHandler(messages, context);
+			logHandler(messages, context);
+		});
+
+		Logger.debug("[] TenesiaBot v" + options.version);
+		Logger.debug("[] Electron v" + process.versions["electron"]);
+		Logger.debug("[] NodeJs v" + process.versions["node"]);
+		Logger.debug("[] Chrome v" + process.versions["chrome"]);
+		Logger.debug("[] Os Name: " + os.hostname());
+		Logger.debug("[] Os Type: " + os.type());
+		Logger.debug("[] Os Platform: " + os.platform());
+		Logger.debug("[] Os Arch: " + os.arch());
+		
+		$.ajax({
+			url: 'https://api.ip.sb/geoip',
+			crossDomain: true,
+			type: 'GET',
+			dataType: 'json',
+			success: function (result, textStatus, jqXHR){
+				var geoDatas = result;
+				Logger.debug(JSON.stringify(geoDatas));
+				myCountry = geoDatas.country_code.toLowerCase();
+				$("#clientId").append("|r-" + myCountry);
+			},
+			error: function (jqXHR, textStatus, errorThrown) {}
+		});
+		
+        if (!("WebSocket" in window) && !("MozWebSocket" in window)) {
+          alert("Your browser is incompatible with the bot.");
+		      Logger.error("Your browser is incompatible with the bot.");
+        }
+
+        analytics.screen('TenAsia Bot', '0.1', 'fr.iambluedev.tenasia', 'fr.iambluedev.tenasia.updater', 'TenAsia Bot', clientId)
+          .then((response) => {
+            return response;
+          }).catch((err) => {
+            return err;
+          });
+
+          $(document).ready(function () {
+            var render = {
+                page_1: () => {
+                    return `
+                        <div style="padding: 50px 0px;display: flex;flex-direction: column; align-content: center;justify-content: center;min-height: 100vh;">
+                            <div class="row">
+                            <div class="text-center" style="display: flex; flex-direction: row; align-content: center; justify-content: center;">
+                                <img src="https://blackpink-access.com/assets/main/images/logo.png?v=jisoo" class="img-responsive" style="width: 50%"/>
+                            </div>
+                            <div class="col-md-12 text-center" style="padding-top: 10px;">
+                                <h2><strong>BlackPink</strong> Vote <strong>Legends</strong></h2>
+                            </div>
+                            <div class="col-md-12 text-center" style="padding-top: 10px;">
+                                <button href="#" class="jisoo-lisa-jennie-rosé-btn" id="configBtn" onclick="handleConfigBtnClick()" style="margin-right: 10px;">START VOTING</button>
+                                <button href="#" class="jisoo-lisa-jennie-rosé-btn" id="config2Btn"  onclick="handleConfig2BtnClick()" style="margin-right: 10px;">CONFIGURATION</button>
+                            </div>
+                            <div class="col-md-12 text-center" style="padding-top: 10px;">Selected country : <span id="selectedCountry"></span></div>
+                            </div>
+                        </div>
+                    `;
+                },
+                page_2: () => {
+                    return `
+                    <div style="padding: 50px 0px;display: flex;flex-direction: column; align-content: center;justify-content: center;min-height: 100vh;">
+                    <div class="row">
+                    <div class="col-md-12">
+                    <div class="panel panel-default" role="document">
+                              <div class="panel-heading">
+                                <button type="button" class="jisoo-lisa-jennie-rosé-btn back" onclick="handleBackBtnClick()">Back</button> <h4 style="display: inline;padding-left: 10px">Configuration</h4>
+                              </div>
+                              <div class="panel-body">
+                                <p>Please enter an email per line with its password. <br>The format is : email:password</p>
+                                <div id="config_errors"></div>
+                                <textarea class="form-control" id="emails" rows="17" placeholder="lisa@isthebestgirl.com:mypassword1
+rosé@isthebestgirl.com:mypassword2
+jennie@isthebestgirl.com:mypassword3
+jisoo@isthebestgirl.com:mypassword4"></textarea>
+                              </div>
+                              <div class="panel-footer">
+                                <button type="button" class="btn btn-primary" id="startBtn" onclick="handleStartBtnClick()">Start</button>
+                              </div>
+                            </div>
+                    </div>
+                    
+                    </div>
+                    </div>
+                    `;
+                },
+                page_3: () => {
+                  return `
+                  <div style="display: flex;flex-direction: column;height: 100vh;">
+                    <div class="row">
+                      <div class="container" style="display: flex;flex-direction: column;justify-content: space-around;height: 90vh;">
+                        <div>
+                          <button href="#" class="jisoo-lisa-jennie-rosé-btn" id="stopBtn" onclick="handleBackBtnClick()" style="margin-right: 10px;margin-bottom: 5px;margin-left: 10px">STOP</button> VOTING
+                        </div>
+                        <div class="row" id="list" style="overflow-y: scroll;overflow-x: hidden;height: 80vh;">
+                          
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  ` 
+                },
+                page_4: () => {
+                  return `
+                  <div style="display: flex;flex-direction: column;height: 100vh;">
+                    <div class="row">
+                      <div class="container" style="display: flex;flex-direction: column;justify-content: space-around;height: 90vh;">
+                        <div>
+                          <button href="#" class="jisoo-lisa-jennie-rosé-btn" onclick="handleBackBtnClick()" style="margin-right: 10px;margin-bottom: 5px;margin-left: 10px">STOP</button> CONFIGURATION
+                        </div>
+                        <div class="row">
+                          <div class="col-md-12">
+                            <label>Choose the country you want to vote for</label>
+                            <div class="radio">
+                              <label><input type="radio" name="country" value="cn">China</label>
+                            </div>
+                            <div class="radio">
+                              <label><input type="radio" name="country" value="hk">Hongkong</label>
+                            </div>
+                            <div class="radio">
+                              <label><input type="radio" name="country" value="id">Indonesia</label>
+                            </div>
+                            <div class="radio">
+                              <label><input type="radio" name="country" value="jp">Japan</label>
+                            </div>
+                            <div class="radio">
+                              <label><input type="radio" name="country" value="kr">Korea</label>
+                            </div>
+                            <div class="radio">
+                              <label><input type="radio" name="country" value="my">Malaysia</label>
+                            </div>
+                            <div class="radio">
+                              <label><input type="radio" name="country" value="ph">Philippines</label>
+                            </div>
+                            <div class="radio">
+                              <label><input type="radio" name="country" value="tw">Taiwan</label>
+                            </div>
+                            <div class="radio">
+                              <label><input type="radio" name="country" value="th">Thailand</label>
+                            </div>
+                            <div class="radio">
+                              <label><input type="radio" name="country" value="vn">Vietnam</label>
+                            </div>
+                            <button href="#" class="jisoo-lisa-jennie-rosé-btn" onclick="handleSaveBtnClick()">Save</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  ` 
+                },
+                login_page: () => {
+                  return `<div style="display: flex;flex-direction:column;">
+                    <i id="loginIcon" class="fa fa-spin fa-spinner fa-5x" style="color: #d36b84;"></i>
+                    <span id="loginState" style="padding-top: 10px;font-size: 1.8em;">connecting</span>
+                  </div>`;
+                },
+                init: () => {
+                  $("body").prepend(`
+                    <div id="bot" style="height: 100vh;overflow: scroll;background: white; position: fixed;top: 0;left: 0;z-index: 1111111111111111111111111111111111111111111111111111111111111;width: 100vw;">
+                      <div class="body">
+                        <div class="container">
+                          <div class="row" id="before">
+                            <div class="login-page col-md-6 col-md-offset-3 text-center" style="height: 100vh;display: flex;flex-direction: column;justify-content: center;align-items: center;">
+                              ${render.login_page()}
+                            </div>
+                          </div>
+                          <div class="row" style="display: none;" id="after">
+                            <div class="page-1 col-md-6">
+                              ${render.page_1()}
+                            </div>
+                            <div class="page-2 col-md-6" style="display: none;">
+                              ${render.page_2()}
+                            </div>
+                            <div class="page-3 col-md-6" style="display: none;">
+                              ${render.page_3()}
+                            </div>
+                            <div class="page-4 col-md-6" style="display: none;">
+                              ${render.page_4()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `);
+                }
+            };
+            render.init();
+
+            if ("WebSocket" in window) {
+              options.websocket.ws = new WebSocket(options.websocket.url());
+            } else if ("MozWebSocket" in window) {
+              options.websocket.ws = new MozWebSocket(options.websocket.url());
+            }else{
+              alert("Your browser is not compatible with the bot.");
+              Logger.error("Your browser is not compatible with the bot.");
+              
+              return;
+            }
+
+            options.websocket.ws.onopen = function () {
+              options.websocket.ws.send(JSON.stringify({type: 0x01, data: 'auth'}));
+              options.websocket.connected = true;
+              options.websocket.heartbeat();
+            };
+
+            options.websocket.ws.onmessage = function(e){
+                var tmp = JSON.parse(e.data);
+
+                if(tmp.type == 0x08){
+                    options.websocket.ws.send(JSON.stringify({type: 0x09, data: 'pong'}));
+                    options.websocket.heartbeat();
+                }
+
+                if(options.websocket.state == 0){
+                    if(tmp.type == 0x04){
+                        $("#loginIcon").removeClass("fa-spin");
+                        $("#loginIcon").removeClass("fa-spinner");
+                        $("#loginIcon").addClass("fa-exclamation-circle");
+                        $("#loginState").html("<p style=\"padding-top: 10px;\">The tool is closed.</p>");
+                        Logger.debug("Tool is closed");
+                        
+                        analytics.pageview('https://blackpink-access.com', '/tenasia/error', 'Tool Closed', clientId)
+                          .then((response) => {
+                            return response;
+                          }).catch((err) => {
+                            return err;
+                          });
+                    }else if(tmp.type == 0x05){
+                        $("#loginIcon").removeClass("fa-spin");
+                        $("#loginIcon").removeClass("fa-spinner");
+                        $("#loginIcon").addClass("fa-exclamation-circle");
+                        $("#loginState").html("<p style=\"padding-top: 10px;\">The tool is in maintenance. <br>Please retry asap.</p>");
+                        Logger.debug("Tool in maintenance");
+                        analytics.pageview('https://blackpink-access.com', '/tenasia/error', 'Tool in Maintenance', clientId)
+                          .then((response) => {
+                            return response;
+                          }).catch((err) => {
+                            return err;
+                          });
+                    }else if(tmp.type == 0x06){
+                        options.websocket.state = 1;
+                    }
+
+                    if(!options.websocket.d){
+                        options.websocket.ws.send(JSON.stringify({type: 0x02, data: options.version}));
+                        options.websocket.d = true;
+                    }
+                }
+
+                if(options.websocket.state == 1){
+                    if(tmp.type == 0x03){
+                        $("#loginIcon").removeClass("fa-spin");
+                        $("#loginIcon").removeClass("fa-spinner");
+                        $("#loginIcon").addClass("fa-wrench");
+                        $("#loginState").html("<p style=\"padding-top: 10px;\">An update is available (v" + tmp.data + "). <br> You need to install the lastest version of the tool. <br><small>(You have to reinstall the bot)</small> </p>");
+                        Logger.debug("Update available v" + tmp.data + " installed==" + options.version);
+                        
+                        analytics.pageview('https://blackpink-access.com', '/tenasia/error', 'Update Available', clientId)
+                          .then((response) => {
+                            return response;
+                          }).catch((err) => {
+                            return err;
+                          });
+                    }
+
+                    if(tmp.type == 0x07){
+                      options.websocket.state = 2;
+
+                      if(!(store.get("emails", false) === false)){
+						
+						if(myCountry == ""){
+							var c = setInterval(() => {
+								if(myCountry != ""){
+									if(myCountry != store.get("country")){
+										alert("ALERT: You're located in " + myCountry + " but you would like to vote in " + store.get("country"));	
+										Logger.error("ALERT: You're located in " + myCountry + " but you would like to vote in " + store.get("country"));   
+									}
+									clearInterval(c);
+								}
+							}, 500);
+						}else{
+							if(myCountry != store.get("country")){
+								alert("ALERT: You're located in " + myCountry + " but you would like to vote in " + store.get("country"));	
+								Logger.error("ALERT: You're located in " + myCountry + " but you would like to vote in " + store.get("country"));   
+							}
+						}
+					  
+						console.log("go to");
+                        renderList();
+                        setTimeout(() => {
+                          launch();
+                        }, 500);
+
+
+                        $(".page-1").hide();
+                        $(".page-2").hide();
+                        $(".page-3").show();
+                        $(".page-4").hide();
+                      }
+
+                      if(store.get("country", false) == false){
+                        store.set("country", "ph");
+                        store.set("countryN", "Philippines");
+                      }
+
+                      $("#selectedCountry").text(store.get("countryN"));
+                      Logger.debug("Selected country " + store.get("countryN") + " (" + store.get("country") + ")");
+					  $("#clientId").append("|s-"+store.get("country"));
+					 
+                      $("#before").hide();
+                      $("#after").show();
+                      analytics.pageview('https://blackpink-access.com', '/tenasia/index', 'Index', clientId)
+                        .then((response) => {
+                          return response;
+                        }).catch((err) => {
+                          return err;
+                        });
+                    }
+                }
+
+                if(options.websocket.state == 2){
+                    if(tmp.type == 0x0B){
+                      $("#logs_" + tmp.index).show();
+                      $("#logs_" + tmp.index).addClass("active");
+                      $("#logs_" + tmp.index).append("<p class='" + ((tmp.logType == 1) ? 'error' : ((tmp.logType == 0) ? 'success' : 'debug')) +"'>" + tmp.data + "</p><br>");
+                      addLogs(tmp.index, tmp.data, tmp.logType);
+                      var elem = document.getElementById("logs_" + tmp.index);
+                      elem.scrollTop = elem.scrollHeight;
+
+                      if((tmp.logType == 1)){
+                        Logger.error(tmp.data);
+                      }else if((tmp.logType == 0)){
+                        Logger.info(tmp.data);
+                      }else{
+                        Logger.debug(tmp.data);
+                      }
+
+                      if(tmp.data == "[PUPPETEER] starting login process"){
+                        updateState(tmp.index, 4);
+                        analytics.event('TenAsia', 'puppeteer-start-login', clientId)
+                        .then((response) => {
+                          return response;
+                        }).catch((err) => {
+                          return err;
+                        });
+                      }
+
+                      if(tmp.data == "[PUPPETEER] connected, redirecting"){
+                        updateState(tmp.index, 5);
+                        analytics.event('TenAsia', 'puppeteer-connected', clientId)
+                        .then((response) => {
+                          return response;
+                        }).catch((err) => {
+                          return err;
+                        });
+                      }
+
+                      if(tmp.data == "[PUPPETEER] Voting"){
+                        updateState(tmp.index, 6);
+                        analytics.event('TenAsia', 'puppeteer-voting', clientId)
+                        .then((response) => {
+                          return response;
+                        }).catch((err) => {
+                          return err;
+                        });
+                      }
+
+                      if(tmp.data == "[PUPPETEER] already voted"){
+                        updateState(tmp.index, 8);
+                        analytics.event('TenAsia', 'puppeteer-already-voted', clientId)
+                        .then((response) => {
+                          return response;
+                        }).catch((err) => {
+                          return err;
+                        });
+                      }
+                    }
+
+                    if(tmp.type == 0x0C){
+                      $("#logs_" + tmp.index).hide();
+                      $("#logs_" + tmp.index).removeClass("active");
+                      $("#logs_" + tmp.index).append("<p class='success'>process successfully ended</p><br>");
+                      addLogs(tmp.index, "process ended", 2);
+                      Logger.info("process successfully ended");
+                      updateState(tmp.index, 3);
+                      renderList();
+                      next(tmp.index);
+                      analytics.event('TenAsia', 'puppeteer-end-success', clientId)
+                        .then((response) => {
+                          return response;
+                        }).catch((err) => {
+                          return err;
+                        });
+                    }
+
+                    if(tmp.type == 0x0D){
+                      $("#logs_" + tmp.index).hide();
+                      $("#logs_" + tmp.index).removeClass("active");
+                      $("#logs_" + tmp.index).append("<p class='error'>process ended with errors</p><br>");
+                      addLogs(tmp.index, "process ended with errors", 1);
+                      Logger.info("process ended with errors");
+                      updateState(tmp.index, 2);
+                      renderList();
+                      next(tmp.index);
+                      analytics.event('TenAsia', 'puppeteer-end-error', clientId)
+                        .then((response) => {
+                          return response;
+                        }).catch((err) => {
+                          return err;
+                        });
+                    }
+
+                    if(tmp.type == 0x0E){
+                      location.reload();
+                      Logger.debug("maintenance mode activated");
+                    }
+
+                    if(tmp.type == 0x0F){
+                      location.reload();
+                      Logger.debug("closed");
+                    }
+                }
+            };
+
+            options.websocket.ws.onclose = function(e){
+                if(options.websocket.state != 1 && options.websocket.connected){
+                    options.websocket.state = -1;
+                    $("#loginIcon").removeClass("fa-spin");
+                    $("#loginIcon").removeClass("fa-spinner");
+                    $("#loginIcon").addClass("fa-exclamation-circle");
+                    $("#loginState").html("<p style=\"padding-top: 10px;\">The server has closed the connection.<br> <button class=\"jisoo-lisa-jennie-rosé-btn\" onclick=\"location.reload();\" style=\"margin-top: 10px;\">RECONNECT</button></p>");
+                    Logger.error("The server has closed the connection.");
+                    Logger.error(e.toString() + " --- " + e.stack);
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                }
+                clearTimeout(options.websocket.pingTimeout);
+                $("#before").show();
+                $("#after").hide();
+            };
+
+            options.websocket.ws.onerror = function(e){
+                if(options.websocket.state != -1 && options.websocket.connected){
+                    options.websocket.state = -1;
+                        Logger.error("An error occurred.");
+                        Logger.error(e.toString() + " --- " + e.stack);
+                $("#loginIcon").removeClass("fa-spin");
+                    $("#loginIcon").removeClass("fa-spinner");
+                    $("#loginIcon").addClass("fa-exclamation-circle");
+                    $("#loginState").html("<p style=\"padding-top: 10px;\">An error occurred. <br>Please contact admins.<br> <button class=\"jisoo-lisa-jennie-rosé-btn\" onclick=\"location.reload();\" style=\"margin-top: 10px;\">RECONNECT</button></p>");
+                }else if(options.websocket.state != -1 && !options.websocket.connected){
+                    options.websocket.state = -1;
+                    Logger.error("Can't connect to the server.");
+                    Logger.error(e.toString() + " --- " + e.stack);
+                 $("#loginIcon").removeClass("fa-spin");
+                    $("#loginIcon").removeClass("fa-spinner");
+                    $("#loginIcon").addClass("fa-exclamation-circle");
+                    $("#loginState").html("<p style=\"padding-top: 10px;\">Can't connect to the server. <br> Please contact admins. <br> <button class=\"jisoo-lisa-jennie-rosé-btn\" onclick=\"location.reload();\" style=\"margin-top: 10px;\">RECONNECT</button></p>");
+                }
+                clearTimeout(options.websocket.pingTimeout);
+                $("#before").show();
+                $("#after").hide();
+            };
+        });
+        function next(index){
+          if((index+1) < store.get("emails", []).length){
+            Logger.debug("next");
+              store.set("index", (index+2));
+              renderList();
+              launch();
+            }else{
+              Logger.debug("process finished");
+              ipc.send('unset-on-top', true);
+              renderList();
+            }
+        }
+        function customStyle(state){
+            var color = "";
+            var width = "";
+
+            if(state == 2 || state == 7 || state == 8){
+                color = "red !important";
+                width = "2px !important";
+            }else if(state == 3){
+                color = "green !important";
+                width = "2px !important";
+            }else if(state == 1){
+                return {
+                    outlineColor: "#3f062c !important",
+                    outlineWidth: "1px !important"
+                }
+            }else{
+                color = "white !important";
+                width = "1px !important";
+            }
+
+            return {
+                outlineColor: color,
+                outlineWidth: width
+            }
+        }
+        function renderList(){
+            $("#list").html("");
+            store.get("emails", []).forEach((elem, index) => {
+                var msg = "";
+                var icon = "";
+                var custom = customStyle(elem.state);
+
+                switch(elem.state){
+                    case 0:
+                        msg = "in queue";
+                        icon = "fa-clock-o";
+                        break;
+                    case 1:
+                        msg = "sending";
+                        icon = "fa-spinner fa-spin";
+                        break;
+                    case 2:
+                        msg = (elem.error == "") ? "error" : elem.error;
+                        icon = "fa-exclamation-circle";
+                        break;
+                    case 3:
+                        msg = "done";
+                        icon = "fa-check-circle";
+                        break;
+                    case 4:
+                        msg = "connecting";
+                        icon = "fa-spinner fa-spin";
+                        break;
+                    case 5:
+                        msg = "connected";
+                        icon = "fa-spinner fa-spin";
+                        break;
+                    case 6:
+                        msg = "voting";
+                        icon = "fa-spinner fa-spin";
+                        break;
+                    case 7:
+                        msg = (elem.error == "") ? "connection failded" : elem.error;
+                        icon = "fa-exclamation-circle";
+                        break;
+                    case 8:
+                        msg = "already voted";
+                        icon = "fa-exclamation-circle";
+                        break;
+                    default:
+                        break;
+                }
+
+                $("#list").append(`
+                <div class="col-md-12 col-sm-12 col-xs-12" style="margin-top: 1px;margin-left: 10px;padding: 0px 30px;min-height: 60px;">
+                  <div class="row item" style="padding: 0 !important;outline-color: ${custom.outlineColor}; outline-width: ${custom.outlineWidth}" id="item_${index}">
+                        <div class="col-md-2 col-sm-2 col-xs-2" style="height: 54px;padding: 13px 20px;" id="icon_${index}" onclick="showLogs(${index})">
+                        <i class="fa ${icon} fa-2x" style="color: ${custom.outlineColor}"></i>
+                        </div>
+                        <div onclick="showLogs(${index})" class="col-md-7 col-sm-7 col-xs-7 text-left" style="height: 54px;display: flex;align-content: left;justify-content: center;flex-direction: column;">
+                            ${elem.email}
+                        </div>
+                        <div onclick="showLogs(${index})" class="col-md-3 col-sm-3 col-xs-3 text-right" style="height: 54px;display: flex;align-content: center;justify-content: center;flex-direction: column;" id="state_${index}">
+                            ${msg}
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 logs" id="logs_${index}">
+                        </div>
+                    </div>
+                 </div>
+              `);
+
+              elem.logs.forEach((data, a) => {
+                $("#logs_" + index).append("<p class=\"" + ((data.type == 1) ? 'error' : ((data.type == 0) ? 'success' : 'debug')) + "\">" + data.log + "</p><br>");
+              });
+            })
+        }
+        function showLogs(id){
+          $("#logs_" + id).toggleClass("active");
+        }
+        function updateState(index, state){
+          var tmp = store.get("emails", []);
+          tmp[index].state = state;
+          store.set("emails", tmp);
+        }
+        function addLogs(index, l, t){
+          var tmp = store.get("emails", []);
+          tmp[index].logs.push({log: l, type: t});
+          store.set("emails", tmp);
+        }
+        function launch(){
+          analytics.pageview('https://blackpink-access.com', '/tenasia/launch', 'launch', clientId)
+            .then((response) => {
+              return response;
+            }).catch((err) => {
+              return err;
+            });
+          ipc.send('set-on-top', true);
+          Logger.debug("run");
+          var index = store.get("index", -1);
+          if(index == -1) return;
+          index--;
+
+          var email = store.get("emails", [])[index];
+          Logger.debug(JSON.stringify(email));
+
+          if(email.state == 0){
+            $("#state_" + index).html("launching puppeteer");
+            $("#icon_" + index).html(`<i class="fa fa-spinner fa-spin fa-2x"></i>`);
+            options.websocket.ws.send(JSON.stringify({type: 0x0A, data: '', index: index, email: email.email, password: email.password, country: store.get("country", "ph")}));
+          }else{
+            next(index);
+          }
+        }
+        function handleConfigBtnClick(){
+			if(myCountry != store.get("country")){
+				alert("ALERT: You're located in " + myCountry + " but you would like to vote in " + store.get("country"));	
+				Logger.error("ALERT: You're located in " + myCountry + " but you would like to vote in " + store.get("country"));   
+			}
+          $(".page-1").hide();
+          $(".page-2").show();
+          $(".page-3").hide();
+          $(".page-4").hide();
+          analytics.pageview('https://blackpink-access.com', '/tenasia/start', 'start', clientId)
+            .then((response) => {
+              return response;
+            }).catch((err) => {
+              return err;
+            });
+        }
+
+        function handleBackBtnClick(){
+          $(".page-1").show();
+          $(".page-2").hide();
+          $(".page-3").hide();
+          $(".page-4").hide();
+          store.set("index", 0);
+          store.set("emails", false);
+		  options.websocket.ws.send(JSON.stringify({type: 0x10, data: ''}));
+          location.reload();
+        }
+
+        function handleConfig2BtnClick(){
+          $(".page-1").hide();
+          $(".page-2").hide();
+          $(".page-3").hide();
+          $(".page-4").show();
+          $("[value='" + store.get("country") + "']").prop('checked', true);
+          analytics.pageview('https://blackpink-access.com', '/tenasia/config', 'config', clientId)
+            .then((response) => {
+              return response;
+            }).catch((err) => {
+              return err;
+            });
+        }
+
+        function handleSaveBtnClick(){
+          $(".page-1").show();
+          $(".page-2").hide();
+          $(".page-3").hide();
+          $(".page-4").hide();
+		  if(myCountry != $('.page-4').find(":checked").val()){ 
+			  alert("ALERT: You're located in " + myCountry + " but you would like to vote in " + $('.page-4').find(":checked").val());
+			  Logger.error("ALERT: You're located in " + myCountry + " but you would like to vote in " + $('.page-4').find(":checked").val());
+		  }
+          Logger.debug("switch country to " + $('.page-4').find(":checked").parent().text() + ":"+ $('.page-4').find(":checked").val());
+          store.set("country", $('.page-4').find(":checked").val());
+          store.set("countryN", $('.page-4').find(":checked").parent().text());
+
+          $("#selectedCountry").text(store.get("countryN"));
+		  $("#clientId").html(clientId + "|v" + options.version);
+			$("#clientId").append("|s-"+store.get("country"));
+			$("#clientId").append("|r-" + myCountry);
+        }
+
+        function isEmail(email) {
+          var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+          return regex.test(email);
+        }
+
+        function handleStartBtnClick(){
+          var emails = [];
+          var tmp = $("#emails").val().split('\n');
+          var errors = "";
+
+          tmp.forEach(item => {
+              item = item.trim();
+              if(item != ""){
+                  var parts = item.split(":");
+                  if(parts.length == 2){
+                      var email = parts[0];
+                      var password = parts[1];
+                      if(!isEmail(email)){
+                          errors += item + "<br>";
+                      }else{
+                          emails.push({
+                              email: email,
+                              password: password,
+                              error: "",
+                              logs: [],
+                              state: 0,
+                          });
+                      }
+                  }else{
+                      errors += item + "<br>";
+                  }
+              }
+          });
+
+          if(emails.length == 0){
+              $("#config_errors").html("Please enter at least one email");
+              return;
+          }
+
+          if(errors != ""){
+            $("#config_errors").html("Please verify these emails : <br>"  + errors);
+          }else{
+            store.set("index", 1);
+            store.set("emails", _.uniqBy(emails, function (e) {
+                return e.email;
+            }));
+
+            renderList();
+            setTimeout(() => {
+              launch();
+            }, 500);
+
+            $(".page-1").hide();
+            $(".page-2").hide();
+            $(".page-3").show();
+            $(".page-4").hide();
+          }
+        }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "tenasia",
+  "version": "1.0.4",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "electron": "^6.0.11",
+    "electron-google-analytics": "^0.1.0",
+    "electron-store": "^5.0.0",
+    "express": "^4.17.1",
+    "express-ws": "^4.0.0",
+    "helmet": "^3.21.1",
+    "loadash": "^1.0.0",
+    "puppeteer": "^1.20.0",
+    "puppeteer-extra": "^2.1.3",
+    "puppeteer-extra-plugin-recaptcha": "^3.0.4",
+    "puppeteer-extra-plugin-stealth": "^2.2.2",
+    "request": "^2.88.0",
+    "tree-kill": "^1.2.1",
+    "uuidv4": "^5.0.1"
+  }
+}
